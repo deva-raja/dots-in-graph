@@ -1,0 +1,42 @@
+{
+   "scenarios": [
+      {
+         "id": 1,
+         "name": "first",
+         "vehicles": [
+            {
+               "id": 1,
+               "name": "car one",
+               "speed": 2,
+               "direction": "towards",
+               "x": 200,
+               "y": 300
+            },
+            {
+               "id": 2,
+               "name": "car two",
+               "speed": 5,
+               "direction": "backwards",
+               "x": 400,
+               "y": 100
+            },
+            {
+               "id": 3,
+               "name": "car three",
+               "speed": 7,
+               "direction": "upwards",
+               "x": 600,
+               "y": 400
+            },
+            {
+               "id": 4,
+               "name": "car four",
+               "speed": 10,
+               "direction": "downwards",
+               "x": 1200,
+               "y": 50
+            }
+         ]
+      }
+   ]
+}
