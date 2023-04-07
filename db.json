@@ -3,6 +3,7 @@
       {
          "id": 1,
          "name": "first",
+         "time": 2,
          "vehicles": [
             {
                "id": 1,

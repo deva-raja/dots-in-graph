@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 interface IScenario {
    id: number
    name: string
+   time: number
    vehicles: Vehicle[]
 }
 
@@ -17,29 +18,19 @@ interface Vehicle {
 }
 
 export default function Home() {
-   const [vehicles, setVehicles] = useState<IScenario['vehicles']>([])
+   const [scenario, setScenario] = useState<IScenario | null>(null)
+   const boardRef = useRef<HTMLDivElement>(null)
+   const [scenarioCompleted, setScenarioCompleted] = useState(false)
 
-   useEffect(() => {
-      const getScenario = async () => {
-         const results = await axios.get<IScenario>('http://localhost:4000/scenarios/1')
-         setVehicles(results.data?.vehicles)
+   function getRandomColor() {
+      const color = 'hsl(' + Math.random() * 360 + ', 100%, 75%)'
+      return color
+   }
+   const handleStart = () => {
+      if (scenarioCompleted) {
+         return
       }
 
-      getScenario()
-   }, [])
-
-   const boardRef = useRef<HTMLDivElement>(null)
-
-   useEffect(() => {
-      const board = boardRef.current
-      const boardWidth = board?.offsetWidth;
-      const boardHeight = board?.offsetHeight;
-
-      document.documentElement.style.setProperty('--board-width', `${boardWidth}px`)
-      document.documentElement.style.setProperty('--board-height', `${boardHeight}px`)
-   }, [])
-
-   const handleStart = () => {
       const vehicles = document.querySelectorAll<HTMLElement>('[data-animation="vehicle-move"]')
       vehicles?.forEach((vehicle) => {
          const direction = vehicle.dataset.direction as IScenario['vehicles'][0]['direction']
@@ -73,6 +64,42 @@ export default function Home() {
       })
    }
 
+   //  get selected scenario
+   useEffect(() => {
+      const getScenario = async () => {
+         const results = await axios.get<IScenario>('http://localhost:4000/scenarios/1')
+         setScenario(results.data)
+      }
+
+      getScenario()
+   }, [])
+
+   //  set css variable board width and height
+   useEffect(() => {
+      const board = boardRef.current
+      const boardWidth = board?.offsetWidth
+      const boardHeight = board?.offsetHeight
+
+      document.documentElement.style.setProperty('--board-width', `${boardWidth}px`)
+      document.documentElement.style.setProperty('--board-height', `${boardHeight}px`)
+   }, [])
+
+   //  stop animation after scneario time end
+   useEffect(() => {
+      const scenarioTime = scenario?.time
+
+      if (scenarioTime) {
+         const timeoutPause = setTimeout(() => {
+            handlePause()
+            setScenarioCompleted(true)
+         }, Number(scenarioTime * 1000))
+
+         return () => {
+            clearTimeout(timeoutPause)
+         }
+      }
+   }, [scenario])
+
    return (
       <main className='flex min-h-screen flex-col items-center justify-between p-12'>
          <div className='flex gap-3'>
@@ -84,20 +111,34 @@ export default function Home() {
             </button>
          </div>
 
-         <div ref={boardRef} className='bg-black h-[500px] w-full relative overflow-hidden'>
-            {vehicles &&
-               vehicles.length > 0 &&
-               vehicles?.map((vehicle) => {
-                  const randomColor = Math.floor(Math.random() * 16777215).toString(16)
+         <div>
+            {scenarioCompleted && <h3 className='text-violet-500'>Scenario is completed</h3>}
+         </div>
+
+         <div
+            ref={boardRef}
+            className='bg-green-500 h-[500px] w-full relative overflow-hidden'
+            style={{
+               display: 'grid',
+               gridTemplateColumns: `repeat(14, 1fr)`,
+               gridTemplateRows: `repeat(6, 1fr)`,
+               gap: '2px',
+               border: '4px solid rgb(34 197 94)',
+            }}
+         >
+            {scenario?.vehicles &&
+               scenario?.vehicles.length > 0 &&
+               scenario?.vehicles?.map((vehicle) => {
+                  // const randomColor = Math.floor(Math.random() * 16777215).toString(16)
+                  const randomColor = getRandomColor()
 
                   return (
                      <div
-                        key={vehicle?.id}
                         style={{
                            position: 'absolute',
                            left: vehicle?.x,
                            top: vehicle?.y,
-                           backgroundColor: `#${randomColor}`,
+                           backgroundColor: `${randomColor}`,
                            animationDuration: `${Number(11 - vehicle.speed)}s`,
                            animationFillMode: 'forwards',
                         }}
@@ -109,6 +150,12 @@ export default function Home() {
                      </div>
                   )
                })}
+
+            <>
+               {Array.from(Array(84).keys()).map((item, index) => (
+                  <div key={index} className='bg-black'></div>
+               ))}
+            </>
          </div>
       </main>
    )
